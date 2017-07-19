@@ -77,6 +77,8 @@ class Estimator(object):
     def __init__(self, x0, P0):
         """Returns new RLS estimator."""
         self.x = x0
+        self.dx = np.zeros_like(x0)
+        self.y = np.zeros_like(x0)
         self.P = P0
         # identity matrix same size as P for convenience
         self.I = np.identity(len(x0)) 
@@ -101,8 +103,9 @@ class Estimator(object):
 
         """
         K = priorgain(self.P, A, V) # Kalman Gain
-        y = b - np.dot(A, self.x) # innovation
-        self.x = self.x + np.dot(K, y) # a posteriori estimate
+        self.y = b - np.dot(A, self.x) # innovation
+        self.dx = np.dot(K, y)
+        self.x = self.x + self.dx # a posteriori estimate
         self.P = np.dot(self.I - np.dot(K, A), self.P) # a posteriori covariance
 
     def single_update(self, A, b, v):
@@ -127,8 +130,9 @@ class Estimator(object):
         """
 #        A = A.reshape(1, -1) # TODO consider np.atleast2d
         K = single_priorgain(self.P, A, v)
-        y = b - np.dot(A, self.x)
-        self.x = self.x + K * y # a posteriori estimate
+        self.y = b - np.dot(A, self.x)
+        self.dx = K * y
+        self.x = self.x + self.dx # a posteriori estimate
         self.P = np.dot(self.I - np.dot(K, A), self.P) # a posteriori covariance
 
 
